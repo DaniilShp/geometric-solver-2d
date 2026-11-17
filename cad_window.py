@@ -1,3 +1,5 @@
+from os import path
+
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
 from cad_widget import *
@@ -6,6 +8,8 @@ from input_handler import handle_input
 from cad_graphics_dot import *
 from cad_graphics_line import *
 from geometry import *
+
+ICON_DIR = path.join(path.dirname(path.abspath(__file__)), 'icons')
 
 class CADWindow(QMainWindow):
     def __init__(self):
@@ -66,63 +70,63 @@ class CADWindow(QMainWindow):
 
         # СОЗДАНИЕ ТОЧЕК И ПРЯМЫХ
         self.btn1 = QPushButton("Add dot")
-        self.btn1.setIcon(QIcon('icons/dot.png'))
+        self.btn1.setIcon(QIcon(f'{ICON_DIR}/dot.svg'))
         self.btn1.setIconSize(QSize(24, 24))
 
         # self.btn1.setProperty("class", "inactive")
         self.btn2 = QPushButton("Add line")
-        self.btn2.setIcon(QIcon('icons/line.png'))
+        self.btn2.setIcon(QIcon(f'{ICON_DIR}/line.svg'))
         self.btn2.setIconSize(QSize(24, 24))
 
         # ОГРАНИЧЕНИЯ
         # совпадение двух точек
         self.btn3 = QPushButton()
-        self.btn3.setIcon(QIcon('icons/1.png'))
+        self.btn3.setIcon(QIcon(f'{ICON_DIR}/1.svg'))
         self.btn3.setIconSize(QSize(24, 24))
 
         # расстояние между двумя точками
         self.btn5 = QPushButton()
-        self.btn5.setIcon(QIcon('icons/2.png'))
+        self.btn5.setIcon(QIcon(f'{ICON_DIR}/2.svg'))
         self.btn5.setIconSize(QSize(24, 24))
 
         # параллельность двух отрезков
         self.btn6 = QPushButton()
-        self.btn6.setIcon(QIcon('icons/3.png'))
+        self.btn6.setIcon(QIcon(f'{ICON_DIR}/3.svg'))
         self.btn6.setIconSize(QSize(24, 24))
 
         # перпендикулярность двух отрезков
         self.btn7 = QPushButton()
-        self.btn7.setIcon(QIcon('icons/4.png'))
+        self.btn7.setIcon(QIcon(f'{ICON_DIR}/4.svg'))
         self.btn7.setIconSize(QSize(24, 24))
 
         # вертикальность отрезка
         self.btn8 = QPushButton()
-        self.btn8.setIcon(QIcon('icons/5.png'))
+        self.btn8.setIcon(QIcon(f'{ICON_DIR}/5.svg'))
         self.btn8.setIconSize(QSize(24, 24))
 
         # горизонтальность отрезка
         self.btn9 = QPushButton()
-        self.btn9.setIcon(QIcon('icons/6.png'))
+        self.btn9.setIcon(QIcon(f'{ICON_DIR}/6.svg'))
         self.btn9.setIconSize(QSize(24, 24))
 
         # угол между отрезками
         self.btn10 = QPushButton()
-        self.btn10.setIcon(QIcon('icons/7.png'))
+        self.btn10.setIcon(QIcon(f'{ICON_DIR}/7.svg'))
         self.btn10.setIconSize(QSize(24, 24))
 
         # принадлежность точки прямой
         self.btn11 = QPushButton()
-        self.btn11.setIcon(QIcon('icons/8.png'))
+        self.btn11.setIcon(QIcon(f'{ICON_DIR}/8.svg'))
         self.btn11.setIconSize(QSize(24, 24))
 
         # фиксация точки
         self.btn12 = QPushButton()
-        self.btn12.setIcon(QIcon('icons/9.png'))
+        self.btn12.setIcon(QIcon(f'{ICON_DIR}/9.svg'))
         self.btn12.setIconSize(QSize(24, 24))
 
         # УДАЛЕНИЕ ОБЬЕКТОВ
         self.btn4 = QPushButton("DELETE")
-        self.btn4.setIcon(QIcon('icons/delete.png'))
+        self.btn4.setIcon(QIcon(f'{ICON_DIR}/delete.svg'))
         self.btn4.setIconSize(QSize(24, 24))
 
         layout.addWidget(self.btn1)
@@ -143,6 +147,9 @@ class CADWindow(QMainWindow):
         layout.addStretch()
 
         buttons_dock.setTitleBarWidget(title_widget)
+
+        for btn in self.findChildren(QPushButton):
+            self.apply_button_style(btn, "bla")
 
         # подключение кнопок
         self.btn1.clicked.connect(self.onButton1Clicked)
@@ -348,14 +355,18 @@ class CADWindow(QMainWindow):
                 new_line = self.cad.scene.addLine(Line(self.cad.scene, uuid, dot1, dot2))
 
     
+    def apply_button_style(self, btn, cls):
+        btn.setProperty("class", cls)
+        btn.style().unpolish(btn)
+        btn.style().polish(btn)
+
     def reset_buttons_active(self):
-        # self.btn1.setProperty("class", "inactive")
-        self.btn1.setStyleSheet("background-color: #CCCCCC;")
-        self.btn2.setStyleSheet("background-color: #CCCCCC;")
-        self.btn3.setStyleSheet("background-color: #CCCCCC;")
         self.btn1.setEnabled(True)
         self.btn2.setEnabled(True)
         self.btn3.setEnabled(True)
+        self.apply_button_style(self.btn1, "bla")
+        self.apply_button_style(self.btn2, "bla")
+        self.apply_button_style(self.btn3, "bla")
         self.active_button = None
     
 
@@ -375,15 +386,14 @@ class CADWindow(QMainWindow):
         self.btn3.setEnabled(False)
 
         if button_id == 1:
-            # self.btn1.setProperty("class", "active")
             self.btn1.setEnabled(True)
-            self.btn1.setStyleSheet("background-color: #4EEA00; color: white;")
+            self.apply_button_style(self.btn1, "active")
         if button_id == 2:
             self.btn2.setEnabled(True)
-            self.btn2.setStyleSheet("background-color: #4EEA00; color: white;")
+            self.apply_button_style(self.btn2, "active")
         if button_id == 3:
             self.btn3.setEnabled(True)
-            self.btn3.setStyleSheet("background-color: #4EEA00; color: white;")
+            self.apply_button_style(self.btn3, "active")
 
         self.active_button = button_id        
         # Активная кнопка зеленая
