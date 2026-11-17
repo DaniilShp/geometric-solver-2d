@@ -75,12 +75,7 @@ def handle_input(window=None, event=None, mouse_pos=None, input_type=None, trigg
 
     match input_type:
         case "delete_object":
-            selected = window.cad.scene.grScene.selectedItems()
-            window.cad.scene.removeItems(selected)
-            for item in selected:
-                print(item.uuid)
-                window.solver.handle_delete(item.uuid)
-            # window.cad.scene.removeLine(3)
+            window.delete_selected()
 
         case "delete_constraint":
             objects = constaints["objects"]

@@ -2,6 +2,7 @@ from os import path
 
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
+from PyQt5.QtGui import QKeySequence
 from cad_widget import *
 from cad_button import CADButton
 from input_handler import handle_input
@@ -42,18 +43,12 @@ class CADWindow(QMainWindow):
         constraints_layout.setContentsMargins(4, 4, 4, 4)
         constraints_layout.setSpacing(4)
 
-        # кнопка удаления ограничений
-        self.clear_constraints_btn = QPushButton("🗑️ Удалить выделенное")
-        self.clear_constraints_btn.clicked.connect(self.delete_selected_constraints)
-
-        
         self.constraints_list = QListWidget()
         self.constraints_list.setAlternatingRowColors(True)
         self.constraints_list.setContextMenuPolicy(Qt.CustomContextMenu)
         # self.constraints_list.customContextMenuRequested.connect(self.show_context_menu)
 
 
-        constraints_layout.addWidget(self.clear_constraints_btn)
         constraints_layout.addWidget(self.constraints_list, 1)
 
         constraints_dock.setWidget(constraints_container)
@@ -124,13 +119,10 @@ class CADWindow(QMainWindow):
         self.btn12.setIcon(QIcon(f'{ICON_DIR}/9.svg'))
         self.btn12.setIconSize(QSize(24, 24))
 
-        # УДАЛЕНИЕ ОБЬЕКТОВ
-        self.btn4 = QPushButton("DELETE")
-        self.btn4.setIcon(QIcon(f'{ICON_DIR}/delete.svg'))
-        self.btn4.setIconSize(QSize(24, 24))
-
         layout.addWidget(self.btn1)
         layout.addWidget(self.btn2)
+
+        layout.addSpacing(24)
 
         layout.addWidget(self.btn3)
         layout.addWidget(self.btn5)
@@ -141,8 +133,6 @@ class CADWindow(QMainWindow):
         layout.addWidget(self.btn10)
         layout.addWidget(self.btn11)
         layout.addWidget(self.btn12)
-
-        layout.addWidget(self.btn4)
         
         layout.addStretch()
 
@@ -155,7 +145,6 @@ class CADWindow(QMainWindow):
         self.btn1.clicked.connect(self.onButton1Clicked)
         self.btn2.clicked.connect(self.onButton2Clicked)
         self.btn3.clicked.connect(self.onButton3Clicked)
-        self.btn4.clicked.connect(self.onButton4Clicked)
         self.btn5.clicked.connect(self.onButton5Clicked)
         self.btn6.clicked.connect(self.onButton6Clicked)
         self.btn7.clicked.connect(self.onButton7Clicked)
@@ -164,6 +153,9 @@ class CADWindow(QMainWindow):
         self.btn10.clicked.connect(self.onButton10Clicked)
         self.btn11.clicked.connect(self.onButton11Clicked)
         self.btn12.clicked.connect(self.onButton12Clicked)
+
+        self.delete_shortcut = QShortcut(QKeySequence(Qt.Key_Delete), self)
+        self.delete_shortcut.activated.connect(self.delete_selected)
 
 
         fileMenu = menubar.addMenu('Построение эскиза')
@@ -230,21 +222,53 @@ class CADWindow(QMainWindow):
             'objects': objects
         })
 
-    def delete_selected_constraints(self):
-        selected_items = self.constraints_list.selectedItems()
-        if not selected_items:
+    def _delete_constraint(self, row):
+        if not (0 <= row < len(self.constraints)):
             return
-        
+
+        handle_input(self, input_type="delete_constraint", constaints=self.constraints[row])
+        self.constraints_list.takeItem(row)
+        del self.constraints[row]
+
+    def delete_selected(self):
+        selected_items = self.constraints_list.selectedItems()
         rows = sorted(
             {self.constraints_list.row(item) for item in selected_items},
             reverse=True
         )
-
         for row in rows:
-            if 0 <= row < len(self.constraints):
-                handle_input(self, input_type="delete_constraint", constaints=self.constraints[row])
-                self.constraints_list.takeItem(row)
-                del self.constraints[row]
+            self._delete_constraint(row)
+
+        selected = self.cad.scene.grScene.selectedItems()
+        uuids = []
+        for item in selected:
+            if hasattr(item, "uuid") and item.uuid not in uuids:
+                uuids.append(item.uuid)
+
+        # каскад: линии, опирающиеся на выделенные точки
+        for uuid in list(uuids):
+            dot = self.cad.scene.find_dot_by_uuid(uuid)
+            if dot is None:
+                continue
+            for line in self.cad.scene.lines:
+                if (line.start_dot is dot or line.end_dot is dot) and line.uuid not in uuids:
+                    uuids.append(line.uuid)
+
+        # каскад: ограничения, ссылающиеся на удаляемые сущности
+        for row in range(len(self.constraints) - 1, -1, -1):
+            if set(self.constraints[row]["objects"]) & set(uuids):
+                self._delete_constraint(row)
+
+        # сначала линии, затем точки
+        for uuid in uuids:
+            if self.cad.scene.find_line_by_uuid(uuid):
+                self.cad.scene.removeLine(uuid)
+        for uuid in uuids:
+            if self.cad.scene.find_dot_by_uuid(uuid):
+                self.cad.scene.removeDot(uuid)
+
+        for uuid in uuids:
+            self.solver.handle_delete(uuid)
 
 
 
@@ -282,10 +306,7 @@ class CADWindow(QMainWindow):
     def onButton12Clicked(self):
         handle_input(self, input_type="constraint_9")
 
-    def onButton4Clicked(self):
-        handle_input(self, input_type="delete_object")
-
-   
+    
 
 
     # TEST FUNCTIONAL
