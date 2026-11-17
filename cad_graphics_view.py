@@ -155,20 +155,14 @@ class QDMGraphicsView(QGraphicsView):
 
     def leftMouseButtonRelease(self, event):
         self.timer.stop()
-        # selected = self.grScene.selectedItems()
-        # if len(selected) == 0:
-        #     print("простое зажатие")
-        #     return
-        # if len(selected) > 1 or not isinstance(selected[0], QDMGraphicsDot):
-        #     print("простое зажатие")
-        #     return
+        result = super().mouseReleaseEvent(event)
 
-        # print("зажали кнопку", selected[0].x, selected[0].y)
-        # current_pos = self.mapToScene(self.mapFromGlobal(QCursor.pos()))
-        # print(current_pos)
-        # handle_input(self.window(), input_type="render", mouse_pos=[current_pos.x(), current_pos.y()])
+        selected = self.grScene.selectedItems()
+        if len(selected) == 1 and isinstance(selected[0], QDMGraphicsDot):
+            handle_input(self.window(), input_type="render",
+                         mouse_pos=[selected[0].x, selected[0].y])
 
-        return super().mouseReleaseEvent(event)
+        return result
     
 
     def rightMouseButtonPress(self, event):

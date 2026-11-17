@@ -21,3 +21,9 @@ class Dot():
         self._x = x
         self._y = y
         self.grNode.setPos(x, y)
+
+    def update_lines(self):
+        for line in self.scene.lines:
+            if line.start_dot is self or line.end_dot is self:
+                line.grLine.updatePath()
+                line.grLine.update()

@@ -669,9 +669,10 @@ class Solver:
                 triggered_obj = self.points[triggered_obj]
             elif triggered_obj in self.segments:
                 triggered_obj = self.segments[triggered_obj]
-        for vertex in self.graph[triggered_obj].keys():
-            self.graph[vertex].pop(triggered_obj)
-        self.graph.pop(triggered_obj)
+        for vertex in list(self.graph.get(triggered_obj, {}).keys()):
+            if vertex is not None:
+                self.graph[vertex].pop(triggered_obj, None)
+        self.graph.pop(triggered_obj, None)
         print("deleted")
 
     def handle_delete_constraint(self, triggered_obj1: UUID, triggered_obj2: UUID | None = None):
@@ -684,8 +685,10 @@ class Solver:
                 triggered_obj2 = self.points[triggered_obj2]
             elif triggered_obj2 in self.segments:
                 triggered_obj2 = self.segments[triggered_obj2]
-            self.graph[triggered_obj2].pop(triggered_obj1)
-        self.graph[triggered_obj1].pop(triggered_obj2)
+        if triggered_obj1 in self.graph:
+            self.graph[triggered_obj1].pop(triggered_obj2, None)
+        if triggered_obj2 is not None and triggered_obj2 in self.graph:
+            self.graph[triggered_obj2].pop(triggered_obj1, None)
         print("constr deleted")
 
     def handle_move(self, coordinates: List, triggered_obj: UUID):

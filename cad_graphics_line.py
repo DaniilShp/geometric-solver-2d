@@ -19,16 +19,17 @@ class QDMGraphicsLine(QGraphicsPathItem):
         self._pen_selected.setWidthF(2.0)
 
         self.initUI()
+        self.updatePath()
 
     def initUI(self):
         self.setFlag(QGraphicsItem.ItemIsSelectable)
+        self.setZValue(-1)
 
     def boundingRect(self):
-        return self.shape().boundingRect()
+        margin = self._pen.widthF() / 2 + 1
+        return self.path().boundingRect().adjusted(-margin, -margin, margin, margin)
 
     def paint(self, painter, option, widget = ...):
-        self.updatePath()
-
         painter.setPen(self._pen if not self.isSelected() else self._pen_selected)
         painter.setBrush(Qt.NoBrush)
         painter.drawPath(self.path() )

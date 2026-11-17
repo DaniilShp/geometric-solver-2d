@@ -5,6 +5,12 @@ from cad_graphics_dot import *
 from cad_line import *
 # from geometry import *
 
+CONSTRAINT_INPUTS = {
+    "constraint_1": 1, "constraint_2": 2, "constraint_3": 3,
+    "constraint_4": 4, "constraint_5": 5, "constraint_6": 6,
+    "constraint_7": 7, "constraint_8": 8, "constraint_9": 9,
+}
+
 def handle_input(window=None, event=None, mouse_pos=None, input_type=None, triggered_obj=None, constaints=None):
 
     if event is not None:
@@ -61,6 +67,12 @@ def handle_input(window=None, event=None, mouse_pos=None, input_type=None, trigg
     #         print("whatahell")
     #         window.add_constraint("Distance", selected[0])
 
+    if input_type in CONSTRAINT_INPUTS:
+        uuids = [item.uuid for item in window.cad.scene.grScene.selectedItems()]
+        if window.constraint_exists(CONSTRAINT_INPUTS[input_type], uuids):
+            show_popup(window, "Такое ограничение уже задано")
+            return
+
     match input_type:
         case "delete_object":
             selected = window.cad.scene.grScene.selectedItems()
@@ -71,7 +83,10 @@ def handle_input(window=None, event=None, mouse_pos=None, input_type=None, trigg
             # window.cad.scene.removeLine(3)
 
         case "delete_constraint":
-            window.solver.handle_delete_constraint(constaints["objects"][0], triggered_obj2=constaints["objects"][1])
+            objects = constaints["objects"]
+            window.solver.handle_delete_constraint(
+                objects[0], triggered_obj2=objects[1] if len(objects) > 1 else None
+            )
 
         case "add_dot":
             res = window.solver.handle_input([mouse_pos[0], mouse_pos[1]], False, None)

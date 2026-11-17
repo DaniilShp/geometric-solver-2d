@@ -213,6 +213,12 @@ class CADWindow(QMainWindow):
         self.status_mouse_pos.setText("Scene Pos: [%d, %d]" % (x, y))
 
     # CONSTRAINTS LOGIC
+    def constraint_exists(self, constraint_type, objects):
+        return any(
+            c["type"] == constraint_type and set(c["objects"]) == set(objects)
+            for c in self.constraints
+        )
+
     def add_constraint(self, type, objects, desc=None):
 
         constraint_text = f"{type}, {desc}: {objects}"
@@ -230,23 +236,15 @@ class CADWindow(QMainWindow):
             return
         
         rows = sorted(
-            [self.constraints_list.row(item) for item in selected_items],
+            {self.constraints_list.row(item) for item in selected_items},
             reverse=True
         )
 
-        for row in rows: # main logic here
-            if 0 <= row < len(self.constraints):
-                # del self.constraints[row]
-                print(self.constraints[row])
-                handle_input(self, input_type="delete_constraint", constaints=self.constraints[row])
-
         for row in rows:
-            item = self.constraints_list.takeItem(row)
-            # del item
-
-        handle_input(self, input_type="udalenie contraint")
-                
-        print(selected_items)
+            if 0 <= row < len(self.constraints):
+                handle_input(self, input_type="delete_constraint", constaints=self.constraints[row])
+                self.constraints_list.takeItem(row)
+                del self.constraints[row]
 
 
 

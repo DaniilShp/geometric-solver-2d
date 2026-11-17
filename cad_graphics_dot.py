@@ -29,8 +29,16 @@ class QDMGraphicsDot(QGraphicsItem):
     def initUI(self):
         self.setFlag(QGraphicsItem.ItemIsSelectable)
         self.setFlag(QGraphicsItem.ItemIsMovable)
+        self.setFlag(QGraphicsItem.ItemSendsGeometryChanges)
 
     # возможно стоит перенести эту логику в node_dot
+    def itemChange(self, change, value):
+        if change == QGraphicsItem.ItemPositionHasChanged:
+            self.dot._x = value.x()
+            self.dot._y = value.y()
+            self.dot.update_lines()
+        return super().itemChange(change, value)
+
     @property 
     def x(self): return self.dot._x
 
