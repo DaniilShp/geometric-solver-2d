@@ -30,7 +30,7 @@ class CadWidget(QWidget):
         self.view = QDMGraphicsView(self.scene.grScene, self)
         self.layout.addWidget(self.view)
 
-        self.setWindowTitle("AutoAD")
+        self.setWindowTitle("Геометрический решатель 2D")
         self.show()
 
         # self.addDebugContent()

@@ -101,12 +101,12 @@ class CADWindow(QMainWindow):
         groups_layout.setSpacing(24)
 
         # СОЗДАНИЕ ТОЧЕК И ПРЯМЫХ
-        self.btn1 = QPushButton("Add dot")
+        self.btn1 = QPushButton("Добавить точку")
         self.btn1.setIcon(QIcon(f'{ICON_DIR}/dot.svg'))
         self.btn1.setIconSize(QSize(24, 24))
 
         # self.btn1.setProperty("class", "inactive")
-        self.btn2 = QPushButton("Add line")
+        self.btn2 = QPushButton("Добавить отрезок")
         self.btn2.setIcon(QIcon(f'{ICON_DIR}/line.svg'))
         self.btn2.setIconSize(QSize(24, 24))
 
@@ -231,7 +231,7 @@ class CADWindow(QMainWindow):
 
 
         self.setGeometry(200, 200, 1000, 600)
-        self.setWindowTitle("AutoAD")
+        self.setWindowTitle("Геометрический решатель 2D")
         self.show()
 
     def _create_toolbar_group(self, title, buttons):
@@ -274,7 +274,7 @@ class CADWindow(QMainWindow):
 
 
     def onScenePosChanged(self, x, y):
-        self.status_mouse_pos.setText("Scene Pos: [%d, %d]" % (x, y))
+        self.status_mouse_pos.setText("Позиция сцены: [%d, %d]" % (x, y))
 
     # CONSTRAINTS LOGIC
     def constraint_exists(self, constraint_type, objects):

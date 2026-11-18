@@ -35,11 +35,11 @@ def handle_input(window=None, event=None, mouse_pos=None, input_type=None, trigg
             selected = window.cad.scene.grScene.selectedItems()
             if len(selected) != 2:
                 # print("you need two objects")
-                show_popup(window, "you need two objects")
+                show_popup(window, "Нужно выбрать два объекта")
             else:
                 if not isinstance(selected[0], QDMGraphicsDot) or not isinstance(selected[1], QDMGraphicsDot):
                     # print("you need dots")
-                    show_popup(window, "you need dots")
+                    show_popup(window, "Нужны точки")
                 else:
                     # id нормально обрабатывай 
                     dot1 = window.cad.scene.find_dot_by_uuid(selected[0].uuid)
@@ -91,11 +91,11 @@ def handle_input(window=None, event=None, mouse_pos=None, input_type=None, trigg
             selected = window.cad.scene.grScene.selectedItems()
             if len(selected) != 2:
                 # print("you need two objects")
-                show_popup(window, "you need two objects")
+                show_popup(window, "Нужно выбрать два объекта")
             else:
                 if not isinstance(selected[0], QDMGraphicsDot) or not isinstance(selected[1], QDMGraphicsDot):
                     # print("you need dots")
-                    show_popup(window, "you need dots")
+                    show_popup(window, "Нужны точки")
                 else:
                     dot1 = window.cad.scene.find_dot_by_uuid(selected[0].uuid)
                     dot2 = window.cad.scene.find_dot_by_uuid(selected[1].uuid)
@@ -115,11 +115,11 @@ def handle_input(window=None, event=None, mouse_pos=None, input_type=None, trigg
             selected = window.cad.scene.grScene.selectedItems()
             if len(selected) != 2:
                 # print("you need two objects")
-                show_popup(window, "you need two objects")
+                show_popup(window, "Нужно выбрать два объекта")
             else:
                 if not isinstance(selected[0], QDMGraphicsDot) or not isinstance(selected[1], QDMGraphicsDot):
                     # print("you need dots")
-                    show_popup(window, "you need dots")
+                    show_popup(window, "Нужны точки")
                 else:
                     dot1 = window.cad.scene.find_dot_by_uuid(selected[0].uuid)
                     dot2 = window.cad.scene.find_dot_by_uuid(selected[1].uuid)
@@ -146,11 +146,11 @@ def handle_input(window=None, event=None, mouse_pos=None, input_type=None, trigg
             selected = window.cad.scene.grScene.selectedItems()
             if len(selected) != 2:
                 # print("you need two objects")
-                show_popup(window, "you need two objects")
+                show_popup(window, "Нужно выбрать два объекта")
             else:
                 if not isinstance(selected[0], QDMGraphicsLine) or not isinstance(selected[1], QDMGraphicsLine):
                     # print("you need dots")
-                    show_popup(window, "you need lines")
+                    show_popup(window, "Нужны отрезки")
                 else:
                     line1 = window.cad.scene.find_line_by_uuid(selected[0].uuid)
                     line2 = window.cad.scene.find_line_by_uuid(selected[1].uuid)
@@ -174,11 +174,11 @@ def handle_input(window=None, event=None, mouse_pos=None, input_type=None, trigg
             selected = window.cad.scene.grScene.selectedItems()
             if len(selected) != 2:
                 # print("you need two objects")
-                show_popup(window, "you need two objects")
+                show_popup(window, "Нужно выбрать два объекта")
             else:
                 if not isinstance(selected[0], QDMGraphicsLine) or not isinstance(selected[1], QDMGraphicsLine):
                     # print("you need dots")
-                    show_popup(window, "you need lines")
+                    show_popup(window, "Нужны отрезки")
                 else:
                     line1 = window.cad.scene.find_line_by_uuid(selected[0].uuid)
                     line2 = window.cad.scene.find_line_by_uuid(selected[1].uuid)
@@ -199,11 +199,11 @@ def handle_input(window=None, event=None, mouse_pos=None, input_type=None, trigg
             selected = window.cad.scene.grScene.selectedItems()
             if len(selected) != 1:
                 # print("you need two objects")
-                show_popup(window, "you need one object")
+                show_popup(window, "Нужен один объект")
             else:
                 if not isinstance(selected[0], QDMGraphicsLine):
                     # print("you need dots")
-                    show_popup(window, "you need line")
+                    show_popup(window, "Нужен отрезок")
                 else:
                     line1 = window.cad.scene.find_line_by_uuid(selected[0].uuid)
                     window.solver.handle_input([0, 0], False, line1.uuid)
@@ -220,11 +220,11 @@ def handle_input(window=None, event=None, mouse_pos=None, input_type=None, trigg
             selected = window.cad.scene.grScene.selectedItems()
             if len(selected) != 1:
                 # print("you need two objects")
-                show_popup(window, "you need one object")
+                show_popup(window, "Нужен один объект")
             else:
                 if not isinstance(selected[0], QDMGraphicsLine):
                     # print("you need dots")
-                    show_popup(window, "you need line")
+                    show_popup(window, "Нужен отрезок")
                 else:
                     line1 = window.cad.scene.find_line_by_uuid(selected[0].uuid)
                     window.solver.handle_input([0, 0], False, line1.uuid)
@@ -240,11 +240,11 @@ def handle_input(window=None, event=None, mouse_pos=None, input_type=None, trigg
             selected = window.cad.scene.grScene.selectedItems()
             if len(selected) != 2:
                 # print("you need two objects")
-                show_popup(window, "you need two objects")
+                show_popup(window, "Нужно выбрать два объекта")
             else:
                 if not isinstance(selected[0], QDMGraphicsLine) or not isinstance(selected[1], QDMGraphicsLine):
                     # print("you need dots")
-                    show_popup(window, "you need lines")
+                    show_popup(window, "Нужны отрезки")
                 else:
                     line1 = window.cad.scene.find_line_by_uuid(selected[0].uuid)
                     line2 = window.cad.scene.find_line_by_uuid(selected[1].uuid)
@@ -273,12 +273,12 @@ def handle_input(window=None, event=None, mouse_pos=None, input_type=None, trigg
             selected = window.cad.scene.grScene.selectedItems()
             if len(selected) != 2:
                 # print("you need two objects")
-                show_popup(window, "you need two objects")
+                show_popup(window, "Нужно выбрать два объекта")
             else:
                 # NET PROVERKI
                 # if not isinstance(selected[0], QDMGraphicsLine, QDMGraphicsDot) or not isinstance(selected[1], QDMGraphicsLine, QDMGraphicsDot):
                 #     # print("you need dots")
-                #     show_popup(window, "you need dot and line")
+                #     show_popup(window, "Нужна точка и отрезок")
                 # else:
                     if isinstance(selected[0], QDMGraphicsLine):
                         line = window.cad.scene.find_line_by_uuid(selected[0].uuid)
@@ -305,11 +305,11 @@ def handle_input(window=None, event=None, mouse_pos=None, input_type=None, trigg
             selected = window.cad.scene.grScene.selectedItems()
             if len(selected) != 1:
                 # print("you need two objects")
-                show_popup(window, "you need one object")
+                show_popup(window, "Нужен один объект")
             else:
                 if not isinstance(selected[0], QDMGraphicsDot):
                     # print("you need dots")
-                    show_popup(window, "you need dot")
+                    show_popup(window, "Нужна точка")
                 else:
                     dot = window.cad.scene.find_dot_by_uuid(selected[0].uuid)
                     window.solver.handle_input([0, 0], False, dot.uuid)
