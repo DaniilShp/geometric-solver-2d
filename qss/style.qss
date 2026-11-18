@@ -68,6 +68,13 @@ QLabel.toolbar-section {
     padding-left: 4px;
 }
 
+QLabel.panel-section {
+    color: #bdc3c7;
+    font-size: 11px;
+    font-weight: bold;
+    padding: 4px 2px 2px 2px;
+}
+
 QToolTip {
     background-color: #22313f;
     color: #ecf0f1;

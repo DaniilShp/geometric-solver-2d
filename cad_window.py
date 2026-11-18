@@ -12,6 +12,18 @@ from geometry import *
 
 ICON_DIR = path.join(path.dirname(path.abspath(__file__)), 'icons')
 
+CONSTRAINT_INFO = {
+    1: ("Совпадение двух точек", "1.svg"),
+    2: ("Расстояние между двумя точками", "2.svg"),
+    3: ("Параллельность двух отрезков", "3.svg"),
+    4: ("Перпендикулярность двух отрезков", "4.svg"),
+    5: ("Вертикальность отрезка", "5.svg"),
+    6: ("Горизонтальность отрезка", "6.svg"),
+    7: ("Угол между двумя отрезками", "7.svg"),
+    8: ("Принадлежность точки прямой", "8.svg"),
+    9: ("Фиксация точки", "9.svg"),
+}
+
 class CADWindow(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -32,27 +44,44 @@ class CADWindow(QMainWindow):
 
         self.load_styles()
 
-        # СОЗДАНИЕ ДОКА С ОГРАНИЧЕНИЯМИ
-        self.constraints_dock = QDockWidget("Constraints", self)
+        # СОЗДАНИЕ ДОКА С ОБЪЕКТАМИ И ОГРАНИЧЕНИЯМИ
+        self.constraints_dock = QDockWidget("Построение", self)
         self.addDockWidget(Qt.LeftDockWidgetArea, self.constraints_dock)
         self.constraints_dock.setAllowedAreas(Qt.LeftDockWidgetArea)
         self.constraints_dock.setFeatures(QDockWidget.NoDockWidgetFeatures)
         self.constraints_dock.toggleViewAction().setEnabled(False)
 
-        constraints_container = QWidget()
-        constraints_layout = QVBoxLayout(constraints_container)
-        constraints_layout.setContentsMargins(4, 4, 4, 4)
-        constraints_layout.setSpacing(4)
+        build_container = QWidget()
+        build_layout = QVBoxLayout(build_container)
+        build_layout.setContentsMargins(4, 4, 4, 4)
+        build_layout.setSpacing(4)
+
+        objects_label = QLabel("Объекты")
+        objects_label.setProperty("class", "panel-section")
+        objects_label.style().unpolish(objects_label)
+        objects_label.style().polish(objects_label)
+
+        self.objects_list = QListWidget()
+        self.objects_list.setAlternatingRowColors(True)
+        self.objects_list.setSelectionMode(QAbstractItemView.ExtendedSelection)
+
+        constraints_label = QLabel("Ограничения")
+        constraints_label.setProperty("class", "panel-section")
+        constraints_label.style().unpolish(constraints_label)
+        constraints_label.style().polish(constraints_label)
 
         self.constraints_list = QListWidget()
         self.constraints_list.setAlternatingRowColors(True)
+        self.constraints_list.setSelectionMode(QAbstractItemView.ExtendedSelection)
         self.constraints_list.setContextMenuPolicy(Qt.CustomContextMenu)
         # self.constraints_list.customContextMenuRequested.connect(self.show_context_menu)
 
+        build_layout.addWidget(objects_label)
+        build_layout.addWidget(self.objects_list, 1)
+        build_layout.addWidget(constraints_label)
+        build_layout.addWidget(self.constraints_list, 1)
 
-        constraints_layout.addWidget(self.constraints_list, 1)
-
-        self.constraints_dock.setWidget(constraints_container)
+        self.constraints_dock.setWidget(build_container)
 
 
         # СОЗДАНИЕ ПАНЕЛИ С КНОПКАМИ
@@ -180,6 +209,9 @@ class CADWindow(QMainWindow):
         self.cad = CadWidget(self.cad)
         self.setCentralWidget(self.cad)
 
+        self.refresh_objects_list()
+        self.refresh_constraints_list()
+
         # status bar
         # self.statusBar().showMessage("")
         self.status_mouse_pos = QLabel("")
@@ -241,39 +273,100 @@ class CADWindow(QMainWindow):
             for c in self.constraints
         )
 
-    def add_constraint(self, type, objects, desc=None):
+    def _object_label(self, uuid):
+        if self.cad is not None:
+            if self.cad.scene.find_dot_by_uuid(uuid) is not None:
+                return f"Точка {str(uuid)[:8]}"
+            if self.cad.scene.find_line_by_uuid(uuid) is not None:
+                return f"Отрезок {str(uuid)[:8]}"
+        return f"Объект {str(uuid)[:8]}"
 
-        constraint_text = f"{type}, {desc}: {objects}"
-        list_item = QListWidgetItem(constraint_text)
-        list_item.setData(Qt.UserRole, len(self.constraints))
-        self.constraints_list.addItem(list_item)
+    def _constraint_name(self, constraint):
+        name, _ = CONSTRAINT_INFO.get(
+            constraint["type"],
+            (f"Ограничение {constraint['type']}", None),
+        )
+        return name
+
+    def _constraint_text(self, constraint):
+        objects = " ↔ ".join(
+            self._object_label(uuid) for uuid in constraint["objects"]
+        )
+        if objects:
+            return f"{self._constraint_name(constraint)}: {objects}"
+        return self._constraint_name(constraint)
+
+    def refresh_objects_list(self):
+        self.objects_list.clear()
+        if self.cad is None:
+            return
+
+        for dot in self.cad.scene.dots:
+            item = QListWidgetItem(
+                QIcon(f'{ICON_DIR}/dot.svg'),
+                f"Точка {str(dot.uuid)[:8]}",
+            )
+            item.setData(Qt.UserRole, ("object", dot.uuid))
+            self.objects_list.addItem(item)
+
+        for line in self.cad.scene.lines:
+            item = QListWidgetItem(
+                QIcon(f'{ICON_DIR}/line.svg'),
+                f"Отрезок {str(line.uuid)[:8]}",
+            )
+            item.setData(Qt.UserRole, ("object", line.uuid))
+            self.objects_list.addItem(item)
+
+    def refresh_constraints_list(self):
+        self.constraints_list.clear()
+        for constraint in self.constraints:
+            item = QListWidgetItem(self._constraint_text(constraint))
+            icon_file = CONSTRAINT_INFO.get(constraint["type"], (None, None))[1]
+            if icon_file is not None:
+                item.setIcon(QIcon(f'{ICON_DIR}/{icon_file}'))
+            item.setData(Qt.UserRole, ("constraint", constraint))
+            item.setToolTip(
+                ", ".join(str(uuid) for uuid in constraint["objects"])
+            )
+            self.constraints_list.addItem(item)
+
+    def add_constraint(self, type, objects, desc=None):
         self.constraints.append({
             'type': type,
             'objects': objects
         })
+        self.refresh_constraints_list()
 
-    def _delete_constraint(self, row):
-        if not (0 <= row < len(self.constraints)):
+    def _delete_constraint(self, constraint):
+        for index, current in enumerate(self.constraints):
+            if current is constraint:
+                break
+        else:
             return
 
-        handle_input(self, input_type="delete_constraint", constaints=self.constraints[row])
-        self.constraints_list.takeItem(row)
-        del self.constraints[row]
+        handle_input(self, input_type="delete_constraint", constaints=constraint)
+        del self.constraints[index]
 
     def delete_selected(self):
-        selected_items = self.constraints_list.selectedItems()
-        rows = sorted(
-            {self.constraints_list.row(item) for item in selected_items},
-            reverse=True
-        )
-        for row in rows:
-            self._delete_constraint(row)
+        selected_constraints = []
+        for item in self.constraints_list.selectedItems():
+            data = item.data(Qt.UserRole)
+            if data is not None and data[0] == "constraint":
+                selected_constraints.append(data[1])
+
+        for constraint in selected_constraints:
+            self._delete_constraint(constraint)
 
         selected = self.cad.scene.grScene.selectedItems()
         uuids = []
         for item in selected:
             if hasattr(item, "uuid") and item.uuid not in uuids:
                 uuids.append(item.uuid)
+
+        for item in self.objects_list.selectedItems():
+            data = item.data(Qt.UserRole)
+            if data is not None and data[0] == "object" and data[1] not in uuids:
+                uuids.append(data[1])
 
         # каскад: линии, опирающиеся на выделенные точки
         for uuid in list(uuids):
@@ -285,9 +378,9 @@ class CADWindow(QMainWindow):
                     uuids.append(line.uuid)
 
         # каскад: ограничения, ссылающиеся на удаляемые сущности
-        for row in range(len(self.constraints) - 1, -1, -1):
-            if set(self.constraints[row]["objects"]) & set(uuids):
-                self._delete_constraint(row)
+        for constraint in list(self.constraints):
+            if set(constraint["objects"]) & set(uuids):
+                self._delete_constraint(constraint)
 
         # сначала линии, затем точки
         for uuid in uuids:
@@ -299,6 +392,9 @@ class CADWindow(QMainWindow):
 
         for uuid in uuids:
             self.solver.handle_delete(uuid)
+
+        self.refresh_objects_list()
+        self.refresh_constraints_list()
 
 
 
@@ -390,6 +486,7 @@ class CADWindow(QMainWindow):
                 else:
                     new_dot = self.cad.scene.addDot(Dot(self.cad.scene, uuid=uuid, x=x, y=y))
                     print(f"Created new dot with uuid={uuid}")
+                    self.refresh_objects_list()
 
 
     def create_line_from_coordinates(self, dots, uuid):
@@ -402,6 +499,7 @@ class CADWindow(QMainWindow):
                 print("already exits")
             else:
                 new_line = self.cad.scene.addLine(Line(self.cad.scene, uuid, dot1, dot2))
+                self.refresh_objects_list()
 
     
     def apply_button_style(self, btn, cls):
