@@ -339,7 +339,7 @@ def handle_input(window=None, event=None, mouse_pos=None, input_type=None, trigg
 
 def show_popup(window, text):
     msg = QMessageBox(window)
-    msg.setIcon(QMessageBox.Question)
+    msg.setIcon(QMessageBox.Warning)
     msg.setText(text)
     msg.setStandardButtons(QMessageBox.Ok)
     result = msg.exec()

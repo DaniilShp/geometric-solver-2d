@@ -14,10 +14,10 @@ class QDMGraphicsScene(QGraphicsScene):
         self.gridSize = 20
         self.gridSquares = 5
 
-        self._color_background = QColor("#393939")
-        self._color_light = QColor("#2f2f2f")
-        self._color_dark = QColor("#292929")
-        self._color_axes = QColor("#000000")
+        self._color_background = QColor("#23262a")
+        self._color_light = QColor("#2c2f34")
+        self._color_dark = QColor("#363a3f")
+        self._color_axes = QColor("#5a5f66")
 
         self._pen_light = QPen(self._color_light)
         self._pen_light.setWidth(1)

@@ -38,7 +38,7 @@ class CADWindow(QMainWindow):
 
         self.initUI()
 
-        self.set_background_palette("#2c3e50")
+        self.set_background_palette("#34383e")
 
         # self.add_constraint("Расстояние", "Point_1", "Point_2")
 
@@ -225,7 +225,6 @@ class CADWindow(QMainWindow):
         # status bar
         # self.statusBar().showMessage("")
         self.status_mouse_pos = QLabel("")
-        self.status_mouse_pos.setStyleSheet("color: white;") 
         self.statusBar().addPermanentWidget(self.status_mouse_pos)
         self.cad.view.scenePosChanged.connect(self.onScenePosChanged)
 
@@ -242,6 +241,7 @@ class CADWindow(QMainWindow):
 
         label = QLabel(title)
         label.setProperty("class", "toolbar-section")
+        label.setAlignment(Qt.AlignCenter)
         label.style().unpolish(label)
         label.style().polish(label)
         group_layout.addWidget(label)
@@ -251,7 +251,6 @@ class CADWindow(QMainWindow):
         buttons_layout.setSpacing(4)
         for button in buttons:
             buttons_layout.addWidget(button)
-        buttons_layout.addStretch()
         group_layout.addLayout(buttons_layout)
 
         return group

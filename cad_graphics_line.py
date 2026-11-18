@@ -11,7 +11,7 @@ class QDMGraphicsLine(QGraphicsPathItem):
         self.uuid = uuid
 
         self._color = QColor("#FFF2F2F9")
-        self._color_selected = QColor("#FFFFA637")
+        self._color_selected = QColor("#f5a623")
         self._color_highlighted = QColor("#00A8FF")
         self._pen = QPen(self._color)
         self._pen_selected = QPen(self._color_selected)

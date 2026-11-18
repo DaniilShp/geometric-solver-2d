@@ -16,8 +16,8 @@ class QDMGraphicsDot(QGraphicsItem):
         self._pen_default = QPen(QColor("#7F000000"))
         self._brush_default = QBrush(QColor("#FFF2F2F9"))
 
-        self._pen_selected = QPen(QColor("#4EEA00B7"))
-        self._brush_selected = QBrush(QColor("#FFFFA637"))
+        self._pen_selected = QPen(QColor("#f5a623"))
+        self._brush_selected = QBrush(QColor("#f5a623"))
 
         self._pen_highlighted = QPen(QColor("#00A8FF"))
         self._brush_highlighted = QBrush(QColor("#3300A8FF"))
