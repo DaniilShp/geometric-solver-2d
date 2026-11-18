@@ -32,11 +32,12 @@ class CADWindow(QMainWindow):
 
         self.load_styles()
 
-        menubar = self.menuBar()
-
         # СОЗДАНИЕ ДОКА С ОГРАНИЧЕНИЯМИ
-        constraints_dock = QDockWidget("Constraints", self)
-        self.addDockWidget(Qt.RightDockWidgetArea, constraints_dock)
+        self.constraints_dock = QDockWidget("Constraints", self)
+        self.addDockWidget(Qt.LeftDockWidgetArea, self.constraints_dock)
+        self.constraints_dock.setAllowedAreas(Qt.LeftDockWidgetArea)
+        self.constraints_dock.setFeatures(QDockWidget.NoDockWidgetFeatures)
+        self.constraints_dock.toggleViewAction().setEnabled(False)
 
         constraints_container = QWidget()
         constraints_layout = QVBoxLayout(constraints_container)
@@ -51,17 +52,21 @@ class CADWindow(QMainWindow):
 
         constraints_layout.addWidget(self.constraints_list, 1)
 
-        constraints_dock.setWidget(constraints_container)
+        self.constraints_dock.setWidget(constraints_container)
 
 
-        # СОЗДАНИЕ ДОКА С КНОПКАМИ
-        buttons_dock = QDockWidget("buttons", self)
-        self.addDockWidget(Qt.TopDockWidgetArea, buttons_dock)
+        # СОЗДАНИЕ ПАНЕЛИ С КНОПКАМИ
+        buttons_toolbar = QToolBar("buttons", self)
+        buttons_toolbar.setMovable(False)
+        buttons_toolbar.setFloatable(False)
+        buttons_toolbar.setAllowedAreas(Qt.TopToolBarArea)
+        buttons_toolbar.toggleViewAction().setEnabled(False)
+        self.addToolBar(Qt.TopToolBarArea, buttons_toolbar)
 
         title_widget = QWidget()
-        layout = QHBoxLayout(title_widget)
-        layout.setContentsMargins(4, 2, 4, 2)
-        layout.setSpacing(4)
+        groups_layout = QHBoxLayout(title_widget)
+        groups_layout.setContentsMargins(4, 2, 4, 2)
+        groups_layout.setSpacing(24)
 
         # СОЗДАНИЕ ТОЧЕК И ПРЯМЫХ
         self.btn1 = QPushButton("Add dot")
@@ -119,24 +124,38 @@ class CADWindow(QMainWindow):
         self.btn12.setIcon(QIcon(f'{ICON_DIR}/9.svg'))
         self.btn12.setIconSize(QSize(24, 24))
 
-        layout.addWidget(self.btn1)
-        layout.addWidget(self.btn2)
+        tooltips = [
+            (self.btn1, "Точка", "Создаёт точку в рабочей области по клику."),
+            (self.btn2, "Отрезок", "Создаёт отрезок между двумя выбранными точками."),
+            (self.btn3, "Совпадение точек", "Совмещает две выбранные точки в одну."),
+            (self.btn5, "Расстояние", "Задаёт расстояние между двумя выбранными точками."),
+            (self.btn6, "Параллельность", "Делает два выбранных отрезка параллельными."),
+            (self.btn7, "Перпендикулярность", "Делает два выбранных отрезка перпендикулярными."),
+            (self.btn8, "Вертикальность", "Фиксирует выбранный отрезок вертикально."),
+            (self.btn9, "Горизонтальность", "Фиксирует выбранный отрезок горизонтально."),
+            (self.btn10, "Угол", "Задаёт угол между двумя выбранными отрезками."),
+            (self.btn11, "Точка на прямой", "Располагает выбранную точку на выбранном отрезке."),
+            (self.btn12, "Фиксация точки", "Закрепляет выбранную точку в текущем положении."),
+        ]
+        for button, title, description in tooltips:
+            button.setToolTip(f"<b>{title}</b><br>{description}")
 
-        layout.addSpacing(24)
+        primitives_group = self._create_toolbar_group(
+            "Геометрические примитивы",
+            [self.btn1, self.btn2],
+        )
+        constraints_group = self._create_toolbar_group(
+            "Геометрические ограничения",
+            [
+                self.btn3, self.btn5, self.btn6, self.btn7, self.btn8,
+                self.btn9, self.btn10, self.btn11, self.btn12,
+            ],
+        )
+        groups_layout.addWidget(primitives_group)
+        groups_layout.addWidget(constraints_group)
+        groups_layout.addStretch()
 
-        layout.addWidget(self.btn3)
-        layout.addWidget(self.btn5)
-        layout.addWidget(self.btn6)
-        layout.addWidget(self.btn7)
-        layout.addWidget(self.btn8)
-        layout.addWidget(self.btn9)
-        layout.addWidget(self.btn10)
-        layout.addWidget(self.btn11)
-        layout.addWidget(self.btn12)
-        
-        layout.addStretch()
-
-        buttons_dock.setTitleBarWidget(title_widget)
+        buttons_toolbar.addWidget(title_widget)
 
         for btn in self.findChildren(QPushButton):
             self.apply_button_style(btn, "bla")
@@ -157,14 +176,6 @@ class CADWindow(QMainWindow):
         self.delete_shortcut = QShortcut(QKeySequence(Qt.Key_Delete), self)
         self.delete_shortcut.activated.connect(self.delete_selected)
 
-
-        fileMenu = menubar.addMenu('Построение эскиза')
-        act = QAction('New', self)
-        act.setShortcut('Ctrl+N')
-        act.setToolTip("Monster Energy")
-        act.triggered.connect(self.onFuckNew)
-        fileMenu.addAction(act)
-
         
         self.cad = CadWidget(self.cad)
         self.setCentralWidget(self.cad)
@@ -180,6 +191,28 @@ class CADWindow(QMainWindow):
         self.setGeometry(200, 200, 1000, 600)
         self.setWindowTitle("AutoAD")
         self.show()
+
+    def _create_toolbar_group(self, title, buttons):
+        group = QWidget()
+        group_layout = QVBoxLayout(group)
+        group_layout.setContentsMargins(0, 0, 0, 0)
+        group_layout.setSpacing(2)
+
+        label = QLabel(title)
+        label.setProperty("class", "toolbar-section")
+        label.style().unpolish(label)
+        label.style().polish(label)
+        group_layout.addWidget(label)
+
+        buttons_layout = QHBoxLayout()
+        buttons_layout.setContentsMargins(0, 0, 0, 0)
+        buttons_layout.setSpacing(4)
+        for button in buttons:
+            buttons_layout.addWidget(button)
+        buttons_layout.addStretch()
+        group_layout.addLayout(buttons_layout)
+
+        return group
 
     def set_background_palette(self, color_name):
         palette = self.palette()
@@ -197,9 +230,6 @@ class CADWindow(QMainWindow):
         except FileNotFoundError:
             print("styles.qss не найден")
 
-
-    def onFuckNew(self):
-        print("Mmmhhhmhm...")
 
     def onScenePosChanged(self, x, y):
         self.status_mouse_pos.setText("Scene Pos: [%d, %d]" % (x, y))
