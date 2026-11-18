@@ -19,6 +19,10 @@ class QDMGraphicsDot(QGraphicsItem):
         self._pen_selected = QPen(QColor("#4EEA00B7"))
         self._brush_selected = QBrush(QColor("#FFFFA637"))
 
+        self._pen_highlighted = QPen(QColor("#00A8FF"))
+        self._brush_highlighted = QBrush(QColor("#3300A8FF"))
+        self._highlighted = False
+
         self.setPos(self.dot._x, self.dot._y)
         self.initUI()
 
@@ -53,6 +57,12 @@ class QDMGraphicsDot(QGraphicsItem):
     def y(self, value):
         self.dot._y = value
 
+    def setHighlighted(self, highlighted):
+        if self._highlighted == highlighted:
+            return
+        self._highlighted = highlighted
+        self.update()
+
     def paint(self, painter, option, widget = ...):
 
         # paint dot
@@ -61,8 +71,15 @@ class QDMGraphicsDot(QGraphicsItem):
         # path_outline.addRoundedRect(0, 0, self.width, self.height, 1, 1) 
         path_outline.addEllipse(-self.width/2, -self.height/2, self.width, self.height)
         # path_outline.addEllipse(0, 0, self.width, self.height)
-        painter.setPen(self._pen_default if not self.isSelected() else self._pen_selected)
-        painter.setBrush(self._brush_default if not self.isSelected() else self._brush_selected)
+        if self.isSelected():
+            painter.setPen(self._pen_selected)
+            painter.setBrush(self._brush_selected)
+        elif self._highlighted:
+            painter.setPen(self._pen_highlighted)
+            painter.setBrush(self._brush_highlighted)
+        else:
+            painter.setPen(self._pen_default)
+            painter.setBrush(self._brush_default)
         painter.drawPath(path_outline.simplified())
 
         # return super().paint(painter, option, widget)

@@ -56,8 +56,7 @@ def handle_input(window=None, event=None, mouse_pos=None, input_type=None, trigg
     
 
     elif input_type == "selection_changed":
-        # print("selection changed")
-        pass
+        window.sync_objects_selection_from_scene()
 
     # elif input_type == "add_constraint":
     #     selected = window.cad.scene.grScene.selectedItems()

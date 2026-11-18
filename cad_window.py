@@ -32,6 +32,9 @@ class CADWindow(QMainWindow):
         self.coordinates_list = []
         self.constraints = []
         self.solver = Solver()
+        self._syncing_selection = False
+        self._object_items = {}
+        self._object_graphics = {}
 
         self.initUI()
 
@@ -212,6 +215,13 @@ class CADWindow(QMainWindow):
         self.refresh_objects_list()
         self.refresh_constraints_list()
 
+        self.objects_list.itemSelectionChanged.connect(
+            self.on_objects_selection_changed
+        )
+        self.constraints_list.itemSelectionChanged.connect(
+            self.on_constraints_selection_changed
+        )
+
         # status bar
         # self.statusBar().showMessage("")
         self.status_mouse_pos = QLabel("")
@@ -297,38 +307,131 @@ class CADWindow(QMainWindow):
         return self._constraint_name(constraint)
 
     def refresh_objects_list(self):
-        self.objects_list.clear()
+        was_syncing = self._syncing_selection
+        self._syncing_selection = True
+        try:
+            self.objects_list.clear()
+            self._object_items.clear()
+            self._object_graphics.clear()
+            if self.cad is not None:
+                for dot in self.cad.scene.dots:
+                    item = QListWidgetItem(
+                        QIcon(f'{ICON_DIR}/dot.svg'),
+                        f"Точка {str(dot.uuid)[:8]}",
+                    )
+                    item.setData(Qt.UserRole, ("object", dot))
+                    self.objects_list.addItem(item)
+                    self._object_items[dot.uuid] = item
+                    self._object_graphics[dot.uuid] = dot.grNode
+
+                for line in self.cad.scene.lines:
+                    item = QListWidgetItem(
+                        QIcon(f'{ICON_DIR}/line.svg'),
+                        f"Отрезок {str(line.uuid)[:8]}",
+                    )
+                    item.setData(Qt.UserRole, ("object", line))
+                    self.objects_list.addItem(item)
+                    self._object_items[line.uuid] = item
+                    self._object_graphics[line.uuid] = line.grLine
+        finally:
+            self._syncing_selection = was_syncing
+        self.sync_objects_selection_from_scene()
+
+    def refresh_constraints_list(self):
+        was_syncing = self._syncing_selection
+        self._syncing_selection = True
+        try:
+            self.constraints_list.clear()
+            for constraint in self.constraints:
+                item = QListWidgetItem(self._constraint_text(constraint))
+                icon_file = CONSTRAINT_INFO.get(constraint["type"], (None, None))[1]
+                if icon_file is not None:
+                    item.setIcon(QIcon(f'{ICON_DIR}/{icon_file}'))
+                item.setData(Qt.UserRole, ("constraint", constraint))
+                item.setToolTip(
+                    ", ".join(str(uuid) for uuid in constraint["objects"])
+                )
+                self.constraints_list.addItem(item)
+        finally:
+            self._syncing_selection = was_syncing
+        self._clear_constraint_highlight()
+
+    def sync_objects_selection_from_scene(self):
+        if self._syncing_selection or self.cad is None:
+            return
+
+        self._syncing_selection = True
+        try:
+            self.objects_list.clearSelection()
+            for item in self.cad.scene.grScene.selectedItems():
+                uuid = getattr(item, "uuid", None)
+                list_item = self._object_items.get(uuid)
+                if list_item is not None:
+                    list_item.setSelected(True)
+                    self.objects_list.scrollToItem(list_item)
+            self.constraints_list.clearSelection()
+            self._clear_constraint_highlight()
+        finally:
+            self._syncing_selection = False
+
+    def on_objects_selection_changed(self):
+        if self._syncing_selection or self.cad is None:
+            return
+
+        self._syncing_selection = True
+        try:
+            selected_uuids = set()
+            for item in self.objects_list.selectedItems():
+                data = item.data(Qt.UserRole)
+                if data is not None and data[0] == "object":
+                    selected_uuids.add(data[1].uuid)
+
+            gr_scene = self.cad.scene.grScene
+            gr_scene.clearSelection()
+            for uuid in selected_uuids:
+                gr_item = self._object_graphics.get(uuid)
+                if gr_item is not None:
+                    gr_item.setSelected(True)
+            gr_scene.update()
+
+            self.constraints_list.clearSelection()
+            self._clear_constraint_highlight()
+        finally:
+            self._syncing_selection = False
+
+    def on_constraints_selection_changed(self):
+        if self._syncing_selection or self.cad is None:
+            return
+
+        self._syncing_selection = True
+        try:
+            self.objects_list.clearSelection()
+            self.cad.scene.grScene.clearSelection()
+            self.cad.scene.grScene.update()
+        finally:
+            self._syncing_selection = False
+        self._apply_constraint_highlight()
+
+    def _clear_constraint_highlight(self):
+        for gr_item in self._object_graphics.values():
+            if hasattr(gr_item, "setHighlighted"):
+                gr_item.setHighlighted(False)
+
+    def _apply_constraint_highlight(self):
+        self._clear_constraint_highlight()
         if self.cad is None:
             return
 
-        for dot in self.cad.scene.dots:
-            item = QListWidgetItem(
-                QIcon(f'{ICON_DIR}/dot.svg'),
-                f"Точка {str(dot.uuid)[:8]}",
-            )
-            item.setData(Qt.UserRole, ("object", dot.uuid))
-            self.objects_list.addItem(item)
+        highlighted = set()
+        for item in self.constraints_list.selectedItems():
+            data = item.data(Qt.UserRole)
+            if data is not None and data[0] == "constraint":
+                highlighted.update(data[1].get("objects", []))
 
-        for line in self.cad.scene.lines:
-            item = QListWidgetItem(
-                QIcon(f'{ICON_DIR}/line.svg'),
-                f"Отрезок {str(line.uuid)[:8]}",
-            )
-            item.setData(Qt.UserRole, ("object", line.uuid))
-            self.objects_list.addItem(item)
-
-    def refresh_constraints_list(self):
-        self.constraints_list.clear()
-        for constraint in self.constraints:
-            item = QListWidgetItem(self._constraint_text(constraint))
-            icon_file = CONSTRAINT_INFO.get(constraint["type"], (None, None))[1]
-            if icon_file is not None:
-                item.setIcon(QIcon(f'{ICON_DIR}/{icon_file}'))
-            item.setData(Qt.UserRole, ("constraint", constraint))
-            item.setToolTip(
-                ", ".join(str(uuid) for uuid in constraint["objects"])
-            )
-            self.constraints_list.addItem(item)
+        for uuid in highlighted:
+            gr_item = self._object_graphics.get(uuid)
+            if gr_item is not None and hasattr(gr_item, "setHighlighted"):
+                gr_item.setHighlighted(True)
 
     def add_constraint(self, type, objects, desc=None):
         self.constraints.append({
@@ -365,8 +468,10 @@ class CADWindow(QMainWindow):
 
         for item in self.objects_list.selectedItems():
             data = item.data(Qt.UserRole)
-            if data is not None and data[0] == "object" and data[1] not in uuids:
-                uuids.append(data[1])
+            if data is not None and data[0] == "object":
+                uuid = getattr(data[1], "uuid", data[1])
+                if uuid not in uuids:
+                    uuids.append(uuid)
 
         # каскад: линии, опирающиеся на выделенные точки
         for uuid in list(uuids):

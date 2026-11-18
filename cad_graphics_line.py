@@ -12,11 +12,15 @@ class QDMGraphicsLine(QGraphicsPathItem):
 
         self._color = QColor("#FFF2F2F9")
         self._color_selected = QColor("#FFFFA637")
+        self._color_highlighted = QColor("#00A8FF")
         self._pen = QPen(self._color)
         self._pen_selected = QPen(self._color_selected)
+        self._pen_highlighted = QPen(self._color_highlighted)
 
         self._pen.setWidthF(2.0)
         self._pen_selected.setWidthF(2.0)
+        self._pen_highlighted.setWidthF(3.0)
+        self._highlighted = False
 
         self.initUI()
         self.updatePath()
@@ -25,12 +29,23 @@ class QDMGraphicsLine(QGraphicsPathItem):
         self.setFlag(QGraphicsItem.ItemIsSelectable)
         self.setZValue(-1)
 
+    def setHighlighted(self, highlighted):
+        if self._highlighted == highlighted:
+            return
+        self._highlighted = highlighted
+        self.update()
+
     def boundingRect(self):
         margin = self._pen.widthF() / 2 + 1
         return self.path().boundingRect().adjusted(-margin, -margin, margin, margin)
 
     def paint(self, painter, option, widget = ...):
-        painter.setPen(self._pen if not self.isSelected() else self._pen_selected)
+        if self.isSelected():
+            painter.setPen(self._pen_selected)
+        elif self._highlighted:
+            painter.setPen(self._pen_highlighted)
+        else:
+            painter.setPen(self._pen)
         painter.setBrush(Qt.NoBrush)
         painter.drawPath(self.path() )
        
