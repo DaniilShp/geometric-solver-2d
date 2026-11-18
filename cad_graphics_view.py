@@ -1,7 +1,11 @@
+import logging
+
 from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
 from PyQt5.QtCore import *
 from input_handler import *
+
+logger = logging.getLogger("view")
 
 class QDMGraphicsView(QGraphicsView):
     scenePosChanged = pyqtSignal(int, int)
@@ -45,21 +49,26 @@ class QDMGraphicsView(QGraphicsView):
         self.timer.start()
         selected = self.grScene.selectedItems()
         if len(selected) == 0:
-            print("простое зажатие")
+            logger.debug("Hold without selection")
             return
         if len(selected) > 1 or not isinstance(selected[0], QDMGraphicsDot):
-            print("простое зажатие")
+            logger.debug("Hold on non-point selection (selected=%d)", len(selected))
             return
 
-        print("зажали кнопку", selected[0].x, selected[0].y)
+        logger.debug(
+            "Point held uuid=%s (x=%.2f, y=%.2f)",
+            selected[0].uuid,
+            selected[0].x,
+            selected[0].y,
+        )
         current_pos = self.mapToScene(self.mapFromGlobal(QCursor.pos()))
-        print(current_pos)
+        logger.debug("Cursor scene position: (%.2f, %.2f)", current_pos.x(), current_pos.y())
         handle_input(self.window(), input_type="render", mouse_pos=[current_pos.x(), current_pos.y()])
         pass
 
 
     def render_on_timeout(self):
-        print("пересчитываем")
+        logger.debug("Scene recomputed")
         
 
     def on_selection_changed(self):
@@ -98,8 +107,6 @@ class QDMGraphicsView(QGraphicsView):
 
     def mouseMoveEvent(self, event):
         
-        # print(self.window().active_button is not None)
-        # print(event.button() == Qt.LeftButton)
         # отладка
 
         scenepos = self.mapToScene(event.pos())
@@ -149,7 +156,10 @@ class QDMGraphicsView(QGraphicsView):
         if event.button() == Qt.LeftButton and self.window().active_button == 2:
             selected = self.grScene.selectedItems()
             if len(selected) < 2:
-                print("you need two dots bastard!")
+                logger.warning(
+                    "Segment creation requires two selected points (selected=%d)",
+                    len(selected),
+                )
         return super().mousePressEvent(event)
     
 
@@ -167,7 +177,6 @@ class QDMGraphicsView(QGraphicsView):
 
     def rightMouseButtonPress(self, event):
         # self.start_single_shot()
-        # print(self.grScene.selectedItems())
         handle_input(self.window(), event=event)
         return super().mousePressEvent(event)
     

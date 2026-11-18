@@ -6,7 +6,6 @@ class QDMGraphicsDot(QGraphicsItem):
     def __init__(self, dot, uuid, parent=None):
         super().__init__(parent)
         self.dot = dot
-        print(dot._x, dot._y)
 
         self.uuid = uuid
 

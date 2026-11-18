@@ -1,9 +1,12 @@
 from uuid import uuid4, UUID
 from typing import List, Dict
 from collections import deque
+import logging
 import math
 
 import numpy as np
+
+logger = logging.getLogger("geometry")
 
 
 class Point:
@@ -673,7 +676,11 @@ class Solver:
             if vertex is not None:
                 self.graph[vertex].pop(triggered_obj, None)
         self.graph.pop(triggered_obj, None)
-        print("deleted")
+        logger.info(
+            "Object removed from solver graph: %s uuid=%s",
+            type(triggered_obj).__name__ if triggered_obj is not None else "None",
+            triggered_obj.get_id() if hasattr(triggered_obj, "get_id") else triggered_obj,
+        )
 
     def handle_delete_constraint(self, triggered_obj1: UUID, triggered_obj2: UUID | None = None):
         if triggered_obj1 in self.points:
@@ -689,7 +696,11 @@ class Solver:
             self.graph[triggered_obj1].pop(triggered_obj2, None)
         if triggered_obj2 is not None and triggered_obj2 in self.graph:
             self.graph[triggered_obj2].pop(triggered_obj1, None)
-        print("constr deleted")
+        logger.info(
+            "Constraint removed: %s <-> %s",
+            triggered_obj1.get_id() if hasattr(triggered_obj1, "get_id") else triggered_obj1,
+            triggered_obj2.get_id() if hasattr(triggered_obj2, "get_id") else triggered_obj2,
+        )
 
     def handle_move(self, coordinates: List, triggered_obj: UUID):
         qt_message = dict()
@@ -700,6 +711,12 @@ class Solver:
                     or self.segments[key].get_points()[1].get_id() == triggered_obj:
                 constraints_deq.append(self.segments[key])
         triggered_obj = self.points[triggered_obj]
+        logger.debug(
+            "Moving point uuid=%s to (%.2f, %.2f)",
+            triggered_obj.get_id(),
+            coordinates[0],
+            coordinates[1],
+        )
         triggered_obj.new_coordinates(coordinates)
         constraints_deq.append(triggered_obj)
         points_order = dict()  # (point_uuid) : (point_row_number in jacobi matrix)
@@ -767,6 +784,12 @@ class Solver:
                 triggered_obj = self.panels[triggered_obj]
         # triggered_obj отправляет None, если нажатие никого не задело, а если задело, то целиком объект
         instruction = self.current_regime.update_regime_state(coordinates, right_button_pressed, triggered_obj)
+        logger.debug(
+            "Solver input: triggered=%s, constraints=%d, create=%d",
+            type(triggered_obj).__name__ if triggered_obj is not None else "None",
+            len(instruction["Constraint"]),
+            len(instruction["CreateElements"]),
+        )
         # Словарь-инструкция содержит объекты! (а у них уже есть id, которые нужно отдать Qt с нужной инструкцией)
         # Либо отдать solver'у с нужными координатами и формулами, а потом уже Qt с инструкциями
         # "CreateElements", "Constraint", "ConstraintObj", "PaintSelection", "RemoveSelection"
@@ -796,6 +819,11 @@ class Solver:
             else:
                 self.graph[vertex1][vertex2] = [constraint]
             constraints_deq.append(vertex1)
+            logger.info(
+                "Constraint %s applied: %s",
+                constraint,
+                ", ".join(str(obj.get_id()) for obj in instruction["ConstraintObj"]),
+            )
 
             # У нас есть один или два объекта сейчас в deq
             # Если это сегмент, нам нужны условия и на него, и на его точки

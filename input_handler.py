@@ -1,3 +1,5 @@
+import logging
+
 from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
 from PyQt5.QtCore import *
@@ -5,10 +7,23 @@ from cad_graphics_dot import *
 from cad_line import *
 # from geometry import *
 
+logger = logging.getLogger("input")
+
 CONSTRAINT_INPUTS = {
     "constraint_1": 1, "constraint_2": 2, "constraint_3": 3,
     "constraint_4": 4, "constraint_5": 5, "constraint_6": 6,
     "constraint_7": 7, "constraint_8": 8, "constraint_9": 9,
+}
+
+POPUP_LOG_MESSAGES = {
+    "Нужно выбрать два объекта": "Expected exactly 2 selected objects",
+    "Нужен один объект": "Expected exactly 1 selected object",
+    "Нужны точки": "Expected points, got other object types",
+    "Нужны отрезки": "Expected segments, got other object types",
+    "Нужен отрезок": "Expected a segment, got another object type",
+    "Нужна точка": "Expected a point, got another object type",
+    "Нужна точка и отрезок": "Expected a point and a segment",
+    "Такое ограничение уже задано": "Constraint already exists",
 }
 
 def handle_input(window=None, event=None, mouse_pos=None, input_type=None, triggered_obj=None, constaints=None):
@@ -20,10 +35,8 @@ def handle_input(window=None, event=None, mouse_pos=None, input_type=None, trigg
             pass
         elif event.button() == Qt.LeftButton:
             coordinates = window.cad.view.mapToScene(event.pos())
-            # print(coordinates.x(), coordinates.y())
             # window.solver.handle_input(coordinates=coordinates)
 
-            # print("blood")
 
     if triggered_obj is not None:
         if triggered_obj == 1:
@@ -34,17 +47,14 @@ def handle_input(window=None, event=None, mouse_pos=None, input_type=None, trigg
             window.setButtonsActive(triggered_obj)
             selected = window.cad.scene.grScene.selectedItems()
             if len(selected) != 2:
-                # print("you need two objects")
                 show_popup(window, "Нужно выбрать два объекта")
             else:
                 if not isinstance(selected[0], QDMGraphicsDot) or not isinstance(selected[1], QDMGraphicsDot):
-                    # print("you need dots")
                     show_popup(window, "Нужны точки")
                 else:
                     # id нормально обрабатывай 
                     dot1 = window.cad.scene.find_dot_by_uuid(selected[0].uuid)
                     dot2 = window.cad.scene.find_dot_by_uuid(selected[1].uuid)
-                    # print("tr1")
                     window.solver.handle_input([dot1._x, dot1._y], False, dot1.uuid)
                     window.solver.handle_input([dot2._x, dot2._y], False, dot2.uuid)
 
@@ -63,7 +73,6 @@ def handle_input(window=None, event=None, mouse_pos=None, input_type=None, trigg
     #     if len(selected) == 0:
     #         pass
     #     else:
-    #         print("whatahell")
     #         window.add_constraint("Distance", selected[0])
 
     if input_type in CONSTRAINT_INPUTS:
@@ -90,11 +99,9 @@ def handle_input(window=None, event=None, mouse_pos=None, input_type=None, trigg
         case "constraint_1":
             selected = window.cad.scene.grScene.selectedItems()
             if len(selected) != 2:
-                # print("you need two objects")
                 show_popup(window, "Нужно выбрать два объекта")
             else:
                 if not isinstance(selected[0], QDMGraphicsDot) or not isinstance(selected[1], QDMGraphicsDot):
-                    # print("you need dots")
                     show_popup(window, "Нужны точки")
                 else:
                     dot1 = window.cad.scene.find_dot_by_uuid(selected[0].uuid)
@@ -114,11 +121,9 @@ def handle_input(window=None, event=None, mouse_pos=None, input_type=None, trigg
         case "constraint_2":
             selected = window.cad.scene.grScene.selectedItems()
             if len(selected) != 2:
-                # print("you need two objects")
                 show_popup(window, "Нужно выбрать два объекта")
             else:
                 if not isinstance(selected[0], QDMGraphicsDot) or not isinstance(selected[1], QDMGraphicsDot):
-                    # print("you need dots")
                     show_popup(window, "Нужны точки")
                 else:
                     dot1 = window.cad.scene.find_dot_by_uuid(selected[0].uuid)
@@ -145,11 +150,9 @@ def handle_input(window=None, event=None, mouse_pos=None, input_type=None, trigg
         case "constraint_3":
             selected = window.cad.scene.grScene.selectedItems()
             if len(selected) != 2:
-                # print("you need two objects")
                 show_popup(window, "Нужно выбрать два объекта")
             else:
                 if not isinstance(selected[0], QDMGraphicsLine) or not isinstance(selected[1], QDMGraphicsLine):
-                    # print("you need dots")
                     show_popup(window, "Нужны отрезки")
                 else:
                     line1 = window.cad.scene.find_line_by_uuid(selected[0].uuid)
@@ -173,11 +176,9 @@ def handle_input(window=None, event=None, mouse_pos=None, input_type=None, trigg
         case "constraint_4":
             selected = window.cad.scene.grScene.selectedItems()
             if len(selected) != 2:
-                # print("you need two objects")
                 show_popup(window, "Нужно выбрать два объекта")
             else:
                 if not isinstance(selected[0], QDMGraphicsLine) or not isinstance(selected[1], QDMGraphicsLine):
-                    # print("you need dots")
                     show_popup(window, "Нужны отрезки")
                 else:
                     line1 = window.cad.scene.find_line_by_uuid(selected[0].uuid)
@@ -198,11 +199,9 @@ def handle_input(window=None, event=None, mouse_pos=None, input_type=None, trigg
         case "constraint_5":
             selected = window.cad.scene.grScene.selectedItems()
             if len(selected) != 1:
-                # print("you need two objects")
                 show_popup(window, "Нужен один объект")
             else:
                 if not isinstance(selected[0], QDMGraphicsLine):
-                    # print("you need dots")
                     show_popup(window, "Нужен отрезок")
                 else:
                     line1 = window.cad.scene.find_line_by_uuid(selected[0].uuid)
@@ -219,11 +218,9 @@ def handle_input(window=None, event=None, mouse_pos=None, input_type=None, trigg
         case "constraint_6":
             selected = window.cad.scene.grScene.selectedItems()
             if len(selected) != 1:
-                # print("you need two objects")
                 show_popup(window, "Нужен один объект")
             else:
                 if not isinstance(selected[0], QDMGraphicsLine):
-                    # print("you need dots")
                     show_popup(window, "Нужен отрезок")
                 else:
                     line1 = window.cad.scene.find_line_by_uuid(selected[0].uuid)
@@ -239,11 +236,9 @@ def handle_input(window=None, event=None, mouse_pos=None, input_type=None, trigg
         case "constraint_7":
             selected = window.cad.scene.grScene.selectedItems()
             if len(selected) != 2:
-                # print("you need two objects")
                 show_popup(window, "Нужно выбрать два объекта")
             else:
                 if not isinstance(selected[0], QDMGraphicsLine) or not isinstance(selected[1], QDMGraphicsLine):
-                    # print("you need dots")
                     show_popup(window, "Нужны отрезки")
                 else:
                     line1 = window.cad.scene.find_line_by_uuid(selected[0].uuid)
@@ -272,12 +267,10 @@ def handle_input(window=None, event=None, mouse_pos=None, input_type=None, trigg
         case "constraint_8":
             selected = window.cad.scene.grScene.selectedItems()
             if len(selected) != 2:
-                # print("you need two objects")
                 show_popup(window, "Нужно выбрать два объекта")
             else:
                 # NET PROVERKI
                 # if not isinstance(selected[0], QDMGraphicsLine, QDMGraphicsDot) or not isinstance(selected[1], QDMGraphicsLine, QDMGraphicsDot):
-                #     # print("you need dots")
                 #     show_popup(window, "Нужна точка и отрезок")
                 # else:
                     if isinstance(selected[0], QDMGraphicsLine):
@@ -287,7 +280,11 @@ def handle_input(window=None, event=None, mouse_pos=None, input_type=None, trigg
                         dot = window.cad.scene.find_dot_by_uuid(selected[0].uuid)
                         line = window.cad.scene.find_line_by_uuid(selected[1].uuid)
 
-                    print(dot, line)
+                    logger.debug(
+                        "Constraint 8: point uuid=%s, segment uuid=%s",
+                        getattr(dot, "uuid", None),
+                        getattr(line, "uuid", None),
+                    )
 
                     window.solver.handle_input([0, 0], False, dot.uuid)
                     window.solver.handle_input([0, 0], False, line.uuid)
@@ -304,11 +301,9 @@ def handle_input(window=None, event=None, mouse_pos=None, input_type=None, trigg
         case "constraint_9":
             selected = window.cad.scene.grScene.selectedItems()
             if len(selected) != 1:
-                # print("you need two objects")
                 show_popup(window, "Нужен один объект")
             else:
                 if not isinstance(selected[0], QDMGraphicsDot):
-                    # print("you need dots")
                     show_popup(window, "Нужна точка")
                 else:
                     dot = window.cad.scene.find_dot_by_uuid(selected[0].uuid)
@@ -338,6 +333,12 @@ def handle_input(window=None, event=None, mouse_pos=None, input_type=None, trigg
 
 
 def show_popup(window, text):
+    log_message = POPUP_LOG_MESSAGES.get(text, text)
+    selected_count = None
+    if window is not None and getattr(window, "cad", None) is not None:
+        selected_count = len(window.cad.scene.grScene.selectedItems())
+    logger.warning("%s (selected objects: %s)", log_message, selected_count)
+
     msg = QMessageBox(window)
     msg.setIcon(QMessageBox.Warning)
     msg.setText(text)

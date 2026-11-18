@@ -1,6 +1,10 @@
+import logging
+
 from cad_graphics_scene import QDMGraphicsScene
 from cad_graphics_dot import *
 from cad_graphics_line import *
+
+logger = logging.getLogger("scene")
 
 class Scene():
 
@@ -35,23 +39,30 @@ class Scene():
 
     def addDot(self, dot):
         self.dots.append(dot)
-        # print(self.dots)
-        # self.grScene.addItem(dot.grNode) # хз правильно ли
+        logger.debug("Point added to scene uuid=%s", dot.uuid)
         return dot
 
     def addLine(self, line):
-        print("ADDE")
         self.lines.append(line)
+        logger.debug("Segment added to scene uuid=%s", line.uuid)
         return line
 
     def removeDot(self, uuid):
         dot = self.find_dot_by_uuid(uuid)
         if self.dotHasLine(dot):
-            print("some line own this dot!")
+            for line in self.lines:
+                if line.start_dot == dot or line.end_dot == dot:
+                    logger.warning(
+                        "Cannot remove point uuid=%s: it belongs to segment uuid=%s",
+                        uuid,
+                        line.uuid,
+                    )
+                    break
             return
         
         self.dots.remove(dot)
         self.grScene.removeItem(dot.grNode)
+        logger.debug("Point removed from scene uuid=%s", uuid)
 
     def dotHasLine(self, dot):
         for line in self.lines:
@@ -62,12 +73,12 @@ class Scene():
     def removeLine(self, uuid):
         line = self.find_line_by_uuid(uuid)
         if line is None:
-            print("nope")
+            logger.warning("Segment uuid=%s not found", uuid)
             return
 
         self.lines.remove(line)
         self.grScene.removeItem(line.grLine)
-        print(self.lines)
+        logger.debug("Segment removed from scene uuid=%s", uuid)
 
 
     def removeItems(self, items):

@@ -1,5 +1,7 @@
 from os import path
 
+import logging
+
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
 from PyQt5.QtGui import QKeySequence
@@ -9,6 +11,8 @@ from input_handler import handle_input
 from cad_graphics_dot import *
 from cad_graphics_line import *
 from geometry import *
+
+logger = logging.getLogger("cad_window")
 
 ICON_DIR = path.join(path.dirname(path.abspath(__file__)), 'icons')
 
@@ -264,12 +268,13 @@ class CADWindow(QMainWindow):
 
     def load_styles(self):
         """Загружает стили из файла"""
+        stylesheet_path = path.abspath('qss/style.qss')
         try:
-            with open('qss/style.qss', 'r', encoding='utf-8') as f:
+            with open(stylesheet_path, 'r', encoding='utf-8') as f:
                 self.setStyleSheet(f.read())
-                print("read")
-        except FileNotFoundError:
-            print("styles.qss не найден")
+            logger.debug("Stylesheet loaded: %s", stylesheet_path)
+        except OSError as exc:
+            logger.warning("Stylesheet not loaded: %s (%s)", stylesheet_path, exc)
 
 
     def onScenePosChanged(self, x, y):
@@ -437,6 +442,11 @@ class CADWindow(QMainWindow):
             'type': type,
             'objects': objects
         })
+        logger.info(
+            "Constraint %s added: objects=%s",
+            type,
+            ", ".join(str(obj)[:8] for obj in objects),
+        )
         self.refresh_constraints_list()
 
     def _delete_constraint(self, constraint):
@@ -450,6 +460,7 @@ class CADWindow(QMainWindow):
         del self.constraints[index]
 
     def delete_selected(self):
+        constraints_before = len(self.constraints)
         selected_constraints = []
         for item in self.constraints_list.selectedItems():
             data = item.data(Qt.UserRole)
@@ -497,6 +508,12 @@ class CADWindow(QMainWindow):
         for uuid in uuids:
             self.solver.handle_delete(uuid)
 
+        logger.info(
+            "Deleted %d object(s) and %d constraint(s)",
+            len(uuids),
+            constraints_before - len(self.constraints),
+        )
+
         self.refresh_objects_list()
         self.refresh_constraints_list()
 
@@ -543,12 +560,10 @@ class CADWindow(QMainWindow):
 
     # def test_handle_input(self, triggered_obj):
     #     if triggered_obj:
-    #         print(f"Button {triggered_obj} is active")
     #         return (triggered_obj, )
         
     #     # ЗАХАРДКОЖЕНО!!!
     #     if self.coordinates_list:
-    #         print(f"Sending {len(self.coordinates_list)} coordinates for drawing")
     #         points_data = [(coord, len(self.coordinates_list) + i) for i, coord in enumerate(self.coordinates_list)]
     #         # coords = self.coordinates_list.copy()
     #         self.coordinates_list.clear()
@@ -586,10 +601,10 @@ class CADWindow(QMainWindow):
                     # dot.y = y
                     # self.cad.scene.update_dot_graphics(dot)
                     dot.setPos(x, y)
-                    print(f"dot has been updated")
+                    logger.debug("Point updated uuid=%s (x=%.2f, y=%.2f)", uuid, x, y)
                 else:
                     new_dot = self.cad.scene.addDot(Dot(self.cad.scene, uuid=uuid, x=x, y=y))
-                    print(f"Created new dot with uuid={uuid}")
+                    logger.info("Point created uuid=%s (x=%.2f, y=%.2f)", uuid, x, y)
                     self.refresh_objects_list()
 
 
@@ -600,9 +615,15 @@ class CADWindow(QMainWindow):
             line = self.cad.scene.find_line_by_uuid(uuid)
 
             if line:
-                print("already exits")
+                logger.debug("Segment already exists uuid=%s", uuid)
             else:
                 new_line = self.cad.scene.addLine(Line(self.cad.scene, uuid, dot1, dot2))
+                logger.info(
+                    "Segment created uuid=%s between points %s and %s",
+                    uuid,
+                    dot1.uuid,
+                    dot2.uuid,
+                )
                 self.refresh_objects_list()
 
     
@@ -628,7 +649,6 @@ class CADWindow(QMainWindow):
         # self.btn2.setStyleSheet("background-color: #CCCCCC;")
         # self.btn3.setStyleSheet("background-color: #CCCCCC;")
 
-        # print(f"setting button active %d", button_id)
 
         self.reset_buttons_active()
 
